@@ -14,8 +14,8 @@ class Greenhouse(db.Model):
     target_co_two = db.Column(db.Float, default = 400.0)
     target_wind_speed = db.Column(db.Float, default = 1.0)
     
-    readings = db.relationship('Reading', backref = 'greenhouse', lazy = True)
-    actuator_status = db.relationship('ActuatorStatus', backref = 'greenhouse', lazy = True)
+    readings = db.relationship('Readings', backref = 'greenhouse', lazy = True,  cascade="all, delete-orphan")
+    actuator_status = db.relationship('ActuatorStatus', backref = 'greenhouse', lazy = True,  cascade="all, delete-orphan")
     
     
     def __init__(self, name, location, target_temp, target_humidity, target_soil_moistur_pct, target_light, target_co_two, target_wind_speed):
@@ -57,12 +57,12 @@ class Readings(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     greenhouse_id = db.Column(db.Integer, db.ForeignKey('greenhouse.id'), nullable = False)
     timestamp = db.Column(db.DateTime, default=datetime.datetime.now, nullable=False)
-    temp_celsius = db.Column(db.Float, nullable = False)
-    humidity_pct = db.Column(db.Float, nullable = False)
-    soil_moisture_pct = db.Column(db.Float, nullable = False)
-    light_lux = db.Column(db.Float, nullable = False)
-    co_two = db.Column(db.Float, nullable = False)
-    wind_speed = db.Column(db.Float, nullable = False)
+    temp_celsius = db.Column(db.Float, nullable = True)
+    humidity_pct = db.Column(db.Float, nullable = True)
+    soil_moisture_pct = db.Column(db.Float, nullable = True)
+    light_lux = db.Column(db.Float, nullable = True)
+    co_two = db.Column(db.Float, nullable = True)
+    wind_speed = db.Column(db.Float, nullable = True)
     
     def __init__(self, greenhouse_id, temp_celsius, humidity_pct, soil_moisture_pct, light_lux, co_two, wind_speed):
         self.greenhouse_id = greenhouse_id
