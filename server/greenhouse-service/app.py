@@ -31,10 +31,12 @@ mqtt_client.loop_start()
 
 from GreenHouse_API import greenhouse_bp
 from Readings_API import readings_bp
+from Actuators_API import actuator_status_bp
 
 
 app.register_blueprint(greenhouse_bp, url_prefix='/api/v1/greenhouse')
 app.register_blueprint(readings_bp, url_prefix='/api/v1/readings')
+app.register_blueprint(actuator_status_bp, url_prefix = '/api/v1/actuator_status')
 
 
 
@@ -46,7 +48,6 @@ def index():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
- 
         
     app.run(port = 5002, debug = True)
     
