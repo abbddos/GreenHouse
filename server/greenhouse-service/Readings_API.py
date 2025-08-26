@@ -22,14 +22,24 @@ def mqtt_messaging(greenhouse_id, reading):
     # Temperature Control
     if reading.temp_celsius > greenhouse.target_temp + temp_margin:
         current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/heater", '{"command": "OFF"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command":"ON}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/humidifier", '{"command": "ON"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "ON"}')
     elif reading.temp_celsius < greenhouse.target_temp - temp_margin:
         current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/heater", '{"command": "ON"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "OFF"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/humidifier", '{"command": "OFF"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "OFF"}')
        
     # Humidity Control 
     if reading.humidity_pct < greenhouse.target_humidity - humidity_margin:
         current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/humidifier", '{"command": "ON"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "OFF"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "OFF"}')
     elif reading.humidity_pct > greenhouse.target_humidity + humidity_margin:
         current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/humidifier", '{"command": "OFF"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "ON"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "ON"}')
         
     # Soil Moisture Control
     if reading.soil_moisture_pct < greenhouse.target_soil_moisture_pct - soil_moisture_margin:
@@ -46,8 +56,12 @@ def mqtt_messaging(greenhouse_id, reading):
     # CO2 Control
     if reading.co_two > greenhouse.target_co_two + co2_margin:
         current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "ON"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "ON"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/lights", '{"command": "OFF"}')
     elif reading.co_two < greenhouse.target_co_two - co2_margin:
         current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "OFF"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "OFF"}')
+        current_app.mqtt_client.publish(f"greenhouse/{greenhouse_id}/lights", '{"command": "ON"}')
         
     # Wind Speed Control
     if reading.wind_speed > greenhouse.target_wind_speed + wind_speed_margin:
