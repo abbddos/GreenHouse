@@ -36,7 +36,7 @@ def add_actuator_status(greenhouse_id):
 def get_all_actuator_statuses(greenhouse_id):
     try:
         all_statuses = ActuatorStatus.query.filter_by(greenhouse = greenhouse_id).order_by(ActuatorStatus.timestamp.desc()).all()
-        status_list = [status.serialize for status in all_statuses]
+        status_list = [status.serialize() for status in all_statuses]
         
         return jsonify(status_list), 200
     
@@ -48,7 +48,7 @@ def get_all_actuator_statuses(greenhouse_id):
 def get_latest_status(greenhouse_id):
     try:
         latest_status = ActuatorStatus.query.filter_by(greenhouse_id = greenhouse_id).order_by(ActuatorStatus.timestamp.desc()).first()
-        return jsonify(latest_status.serialize), 200
+        return jsonify(latest_status.serialize()), 200
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500

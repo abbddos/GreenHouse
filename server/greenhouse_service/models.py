@@ -18,12 +18,12 @@ class Greenhouse(db.Model):
     actuator_status = db.relationship('ActuatorStatus', backref = 'greenhouse', lazy = True,  cascade="all, delete-orphan")
     
     
-    def __init__(self, name, location, target_temp, target_humidity, target_soil_moistur_pct, target_light, target_co_two, target_wind_speed):
+    def __init__(self, name, location, target_temp, target_humidity, target_soil_moisture_pct, target_light, target_co_two, target_wind_speed):
         self.name = name 
         self.location = location 
         self.target_temp = target_temp
         self.target_humidity = target_humidity
-        self.target_soil_moisture_pct = target_soil_moistur_pct
+        self.target_soil_moisture_pct = target_soil_moisture_pct
         self.target_light = target_light
         self.target_co_two = target_co_two
         self.target_wind_speed = target_wind_speed
