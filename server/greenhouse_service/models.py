@@ -98,13 +98,13 @@ class ActuatorStatus(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     greenhouse_id = db.Column(db.Integer, db.ForeignKey('greenhouse.id'), nullable = False)
     timestamp = db.Column(db.DateTime, default=datetime.datetime.now, nullable=False)
-    vents_on = db.Column(db.Boolean, nullable = False, default = False)
-    fan_on = db.Column(db.Boolean, nullable = False, default = False)
-    lights_on = db.Column(db.Boolean, nullable = False, default = False)
-    curtains_on = db.Column(db.Boolean, nullable = False, default = False)
-    irrigation_pump_on = db.Column(db.Boolean, nullable = False, default = False)
-    humidifier_pump_on = db.Column(db.Boolean, nullable = False, default = False)
-    heater_on = db.Column(db.Boolean, nullable = False, default = False)
+    vents_on = db.Column(db.String, nullable = False, default = "OFF")
+    fan_on = db.Column(db.String, nullable = False, default = "OFF")
+    lights_on = db.Column(db.String, nullable = False, default = "OFF")
+    curtains_on = db.Column(db.String, nullable = False, default = "OFF")
+    irrigation_pump_on = db.Column(db.String, nullable = False, default = "OFF")
+    humidifier_pump_on = db.Column(db.String, nullable = False, default = "OFF")
+    heater_on = db.Column(db.String, nullable = False, default = "OFF")
     
     def __init__(self, greenhouse_id, vents, fan, light, curtains, irrigation_pump, humidifier, heater):
         self.greenhouse_id = greenhouse_id
@@ -120,15 +120,15 @@ class ActuatorStatus(db.Model):
     def serialize(self):
         return {
             'id': self.id,
-            'greenhouse id': self.greenhouse_id,
+            'greenhouse_id': self.greenhouse_id,
             'timestamp': self.timestamp,
-            'vents on': self.vents_on,
-            'fan on': self.fan_on,
-            'lights on': self.lights_on,
-            'curtains on': self.curtains_on,
-            'irrigation pump on': self.irrigation_pump_on,
-            'humidifier pump on': self.humidifier_pump_on,
-            'heater on': self.heater_on
+            'vents_on': self.vents_on,
+            'fan_on': self.fan_on,
+            'lights_on': self.lights_on,
+            'curtains_on': self.curtains_on,
+            'irrigation_pump_on': self.irrigation_pump_on,
+            'humidifier_pump_on': self.humidifier_pump_on,
+            'heater_on': self.heater_on
         }
     
     def __repr__(self):

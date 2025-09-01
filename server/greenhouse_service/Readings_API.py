@@ -1,6 +1,8 @@
 from flask import Blueprint, jsonify, request, current_app 
 from models import Greenhouse, Readings
-from database import db 
+from database import db
+import json 
+import datetime
 
 readings_bp = Blueprint('readings_bp', __name__, url_prefix='/api/v1/readings')
 
@@ -22,55 +24,68 @@ def mqtt_messaging(greenhouse_id, reading):
         print(f"Greenhouse with ID {greenhouse_id} not found.")
         return 
     
+    message = {
+        "greenhouse_id": greenhouse_id,
+        "vents_on": "OFF", 
+        "fan_on": "OFF",
+        "lights_on": "OFF",
+        "curtains_on": "OFF",
+        "irrigation_pump_on": "OFF",
+        "humidifier_pump_on": "OFF",
+        "heater_on": "OFF"
+    }
+    
     # Temperature Control
     if reading.temp_celsius > greenhouse.target_temp + temp_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/heater", '{"command": "OFF"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command":"ON}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/humidifier", '{"command": "ON"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "ON"}', retain=True)
+        message['heater_on'] = "OFF"
+        message['vents_on'] = "ON"
+        message['humidifier_pump_on'] = "ON"
+        message['fan_on'] = "ON"
     elif reading.temp_celsius < greenhouse.target_temp - temp_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/heater", '{"command": "ON"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "OFF"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/humidifier", '{"command": "OFF"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "OFF"}', retain=True)
-       
+        message['heater_on'] = "ON"
+        message['vents_on'] = "OFF"
+        message['humidifier_pump_on'] = "OFF"
+        message['fan_on'] = "OFF"
+
     # Humidity Control 
     if reading.humidity_pct < greenhouse.target_humidity - humidity_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/humidifier", '{"command": "ON"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "OFF"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "OFF"}', retain=True)
+        message['humidifier_pump_on'] = "ON"
+        message['fan_on'] = "OFF"
+        message['vents_on'] = "OFF"
     elif reading.humidity_pct > greenhouse.target_humidity + humidity_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/humidifier", '{"command": "OFF"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "ON"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "ON"}', retain=True)
+        message['humidifier_pump_on'] = "OFF"
+        message['fan_on'] = "ON"
+        message['vents_on'] = "ON"
         
     # Soil Moisture Control
     if reading.soil_moisture_pct < greenhouse.target_soil_moisture_pct - soil_moisture_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/irrigation", '{"command": "ON"}', retain=True)
+        message['irrigation_pump_on'] = "ON"
     elif reading.soil_moisture_pct > greenhouse.target_soil_moisture_pct + soil_moisture_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/irrigation", '{"command": "OFF"}', retain=True)
+        message['irrigation_pump_on'] = "OFF"
         
     # Light Control
     if reading.light_lux < greenhouse.target_light - light_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/lights", '{"command": "ON"}', retain=True)
+        message['lights_on'] = "ON"
     elif reading.light_lux > greenhouse.target_light + light_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/lights", '{"command": "OFF"}', retain=True)
+        message['lights_on'] = "OFF"
         
     # CO2 Control
     if reading.co_two > greenhouse.target_co_two + co2_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "ON"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "ON"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/lights", '{"command": "OFF"}', retain=True)
+        message['vents_on'] = "ON" 
+        message['fan_on'] = "ON" 
+        message['lights_on'] = "OFF"
     elif reading.co_two < greenhouse.target_co_two - co2_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/vents", '{"command": "OFF"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "OFF"}', retain=True)
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/lights", '{"command": "ON"}', retain=True)
+        message['vents_on'] = "OFF" 
+        message['fan_on'] = "OFF"
+        message['lights_on'] = "ON"
         
     # Wind Speed Control
     if reading.wind_speed > greenhouse.target_wind_speed + wind_speed_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "ON"}', retain=True)
+        message['fan_on'] = "ON"
     elif reading.wind_speed < greenhouse.target_wind_speed - wind_speed_margin:
-        mqtt_client.publish(f"greenhouse/{greenhouse_id}/fan", '{"command": "OFF"}', retain=True)
+        message['fan_on'] = "OFF"
+        
+    mqtt_client.publish(f"greenhouse/{greenhouse_id}/readings", json.dumps(message), retain=True)
 
 
 
@@ -119,6 +134,7 @@ def get_latest_reading(greenhouse_id):
     try:
         latest_reading = Readings.query.filter_by(greenhouse_id = greenhouse_id).order_by(Readings.timestamp.desc()).first()
         return jsonify(latest_reading.serialize()), 200
+        
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500

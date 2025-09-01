@@ -1,47 +1,75 @@
 import paho.mqtt.client as mqtt
 import json 
+import requests 
 
 mqtt_client = mqtt.Client(client_id="FlaskAPI") 
-TOPIC = "greenhouse/1/heater"
+
+TOPIC_READINGS = "greenhouse/1/readings" 
+
+
+def receive_latest_status(greenhouse_id):
+    API_URL_LATEST = f"http://127.0.0.1:5002/api/v1/actuator_status/{greenhouse_id}/latest"
+    try:
+        response = requests.get(API_URL_LATEST)
+        response.raise_for_status()
+        return response.json()
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching latest data from API: {e}")
+        return None
+    
+    except KeyError as e:
+        print(f"Error parsing data from API: Missing key {e}")
+        return None
+    
+    
+def send_data(data, greenhouse_id):
+    API_URL = f"http://127.0.0.1:5002/api/v1/actuator_status/{greenhouse_id}"
+    try:
+        response = requests.post(API_URL, json = data)
+        response.raise_for_status()
+    
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching latest data from API: {e}")
+
+    
+
 
 def on_connect(client, userdata, flags, rc):
     """Callback for when the client receives a CONNACK response from the broker."""
     if rc == 0:
         print("Connected to MQTT Broker!")
-        client.subscribe(TOPIC)
+        client.subscribe(TOPIC_READINGS)
+
     else:
         print(f"Failed to connect, return code {rc}\n")
         
         
 def on_subscribe(client, userdata, mid, granted_qos):
-    print(f"Subscribed to topic: {TOPIC} with QoS: {granted_qos}")
+    print(f"Subscribed to topic: {TOPIC_READINGS} with QoS: {granted_qos}")
     
     
 def on_message(client, userdata, msg):
+    
     """Callback for when a PUBLISH message is received from the broker."""
     print(f"Received message on topic '{msg.topic}': {msg.payload.decode()}")
     
-    # You can use if/elif to handle different topics with different logic
+    latest_status = receive_latest_status(1)
+    
+        
+    # You can use if to handle different topics with different logic
     if "readings" in msg.topic:
         print("This is a sensor reading message.")
         try:
-            # Assuming readings are JSON, you can parse them
-            data = json.loads(msg.payload.decode('utf-8'))
-            print(f"Parsed reading data: {data}")
+            print(latest_status)
+            #data = json.loads(msg.payload.decode('utf-8'))
+            #print(f"Parsed reading data: {data}")
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON from readings: {e}")
-            
-    elif "heater" in msg.topic:
-        print("This is a heater command message.")
-        try:
-            # Assuming heater commands are JSON
-            data = json.loads(msg.payload.decode('utf-8'))
-            print(f"Parsed heater command: {data['command']}")
-            # You could add logic here to turn a physical heater on/off
-        except json.JSONDecodeError as e:
-            print(f"Error decoding JSON from heater command: {e}")
+        
     else:
-        print("Received a message on an unexpected topic.")
+        print("Received a message on an unexpected topic.")       
+        
         
 mqtt_client.on_connect = on_connect
 mqtt_client.on_subscribe = on_subscribe
