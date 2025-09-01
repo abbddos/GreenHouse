@@ -49,6 +49,9 @@ def get_all_actuator_statuses(greenhouse_id):
 def get_latest_status(greenhouse_id):
     try:
         latest_status = ActuatorStatus.query.filter_by(greenhouse_id = greenhouse_id).order_by(ActuatorStatus.timestamp.desc()).first()
+        if not latest_status:
+            return jsonify({"error":"latest status not found"}), 404
+        
         return jsonify(latest_status.serialize()), 200
         
      

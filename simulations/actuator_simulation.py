@@ -16,7 +16,7 @@ def receive_latest_status(greenhouse_id):
     
     except requests.exceptions.RequestException as e:
         print(f"Error fetching latest data from API: {e}")
-        return None
+        return {}
     
     except KeyError as e:
         print(f"Error parsing data from API: Missing key {e}")
@@ -61,9 +61,17 @@ def on_message(client, userdata, msg):
     if "readings" in msg.topic:
         print("This is a sensor reading message.")
         try:
-            print(latest_status)
-            #data = json.loads(msg.payload.decode('utf-8'))
-            #print(f"Parsed reading data: {data}")
+            data = json.loads(msg.payload.decode('utf-8'))
+            
+            if "timestamp" in latest_status.keys():
+                del latest_status["timestamp"]
+                
+            if "id" in latest_status.keys():
+                del latest_status["id"]
+                            
+            if data != latest_status:
+                send_data(data, 1)
+                
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON from readings: {e}")
         
